@@ -133,7 +133,7 @@ public class OrderCtl extends BaseCtl {
 					service.add(bean);
 					cartService.delete(cartDTO);
 				}
-				Thread.sleep(10000);
+				Thread.sleep(30000);
 				return "success";
 
 		} catch (DuplicateRecordException e) {

@@ -18,7 +18,7 @@
 
 				<div class="col-md-6">
 					<s:bind path="firstName">
-						<label for="inputEmail4" class="form-label">First Name</label>
+						<label for="inputEmail4" class="form-label">Name</label>
 						<sf:input path="${status.expression}"
 							placeholder="Enter First Name" class="form-control" />
 						<font color="red" style="font-size: 13px"><sf:errors
@@ -29,7 +29,7 @@
 
 				<div class="col-md-6">
 					<s:bind path="lastName">
-						<label for="inputEmail4" class="form-label">Last Name</label>
+						<label for="inputEmail4" class="form-label">Enter Address here</label>
 						<sf:input path="${status.expression}"
 							placeholder="Enter Address here" class="form-control" />
 						<font color="red" style="font-size: 13px"><sf:errors
