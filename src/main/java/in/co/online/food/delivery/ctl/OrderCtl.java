@@ -1,5 +1,7 @@
 package in.co.online.food.delivery.ctl;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.List;
 
@@ -120,6 +122,7 @@ public class OrderCtl extends BaseCtl {
 						bean.setOrderid(DataUtility.getRandom());
 						bean.setName(uDto.getFirstName());
 						bean.setAddress1(uDto.getLastName());
+
 				Iterator<CartDTO> it=cList.iterator();
 				model.addAttribute("cartList",cList);
 				model.addAttribute("orderDetail",bean);
@@ -128,7 +131,9 @@ public class OrderCtl extends BaseCtl {
 					CartDTO cartDTO = (CartDTO) it.next();
 					bean.setProduct(cartDTO.getProduct());
 					bean.setUserId(uDto.getId());
+					bean.setMobileNo(uDto.getContactNo());
 					bean.setQuantity(cartDTO.getQuantity());
+					bean.setModifiedDatetime(Timestamp.valueOf(LocalDateTime.now()));
 					bean.setTotal(String.valueOf(DataUtility.getLong(cartDTO.getQuantity())*DataUtility.getLong(cartDTO.getPrice())));
 					service.add(bean);
 					cartService.delete(cartDTO);

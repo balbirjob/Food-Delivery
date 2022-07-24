@@ -32,7 +32,7 @@
 					<s:bind path="orderId">
 						<div class="col">
 							<sf:input path="${status.expression}" class="form-control"
-								placeholder="Search By Order Id" />
+								placeholder="Search order" />
 						</div>
 					</s:bind>
 					<div class="col">
@@ -64,6 +64,8 @@
 							<th scope="col">Price</th>
 							<th scope="col">Total</th>
 							<th scope="col">Address</th>
+							<th scope="col">mobileNo</th>
+							<th scope="col">OrderDate</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -78,6 +80,8 @@
 								<td scope="row">${ord.product.price}</td>
 								<td scope="row">${ord.total}</td>
 								<td scope="row">${ord.address1}</td>
+								<td scope="row">${ord.mobileNo}</td>
+                                <td scope="row">${ord.modifiedDatetime}</td>
 								
 							</tr>
 						</c:forEach>

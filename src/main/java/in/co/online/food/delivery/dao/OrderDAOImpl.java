@@ -2,13 +2,14 @@ package in.co.online.food.delivery.dao;
 
 import java.sql.Blob;
 import java.sql.SQLException;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
 import javax.sql.rowset.serial.SerialBlob;
 import javax.sql.rowset.serial.SerialException;
 
+import org.graalvm.util.CollectionsUtil;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
@@ -95,17 +96,17 @@ public class OrderDAOImpl implements OrderDAOInt {
 	public List<OrderDTO> search(OrderDTO dto, int pageNo, int pageSize) {
 		log.info("OrderDAOImpl Search method Start");
 		Session session = entityManager.unwrap(Session.class);
-		StringBuffer hql = new StringBuffer("from OrderDTO as u where 1=1 ");
+		StringBuffer hql = new StringBuffer("from OrderDTO  ");
 		if (dto != null) {
 			if (dto.getId() > 0) {
-				hql.append("and u.id = " + dto.getId());
+				hql.append("as u where u.id = " + dto.getId());
 			}
 			if (dto.getOrderid() > 0) {
-				hql.append("and u.orderid = " + dto.getOrderid());
+				hql.append("as u where u.orderid = " + dto.getOrderid());
 			}
 			
 			if (dto.getUserId() > 0) {
-				hql.append("and u.userId = " + dto.getUserId());
+				hql.append("as u where u.userId = " + dto.getUserId());
 			}
 			
 
@@ -116,7 +117,28 @@ public class OrderDAOImpl implements OrderDAOInt {
 			query.setFirstResult(pageNo);
 			query.setMaxResults(pageSize);
 		}
-		List<OrderDTO> list = query.getResultList();
+		List<OrderDTO> list = new ArrayList<>();
+		if(Objects.nonNull(dto.getOrderid()) ){
+			list	= query.getResultList();
+		}
+
+		if(list.size()==0)
+		{
+			if (dto.getOrderid() > 0) {
+				hql.append("as u where u.orderid = " + dto.getOrderid());
+			}else {
+
+				hql.append("as u where u.name = " + dto.getOrderid());
+				Query<OrderDTO> query1 = session.createQuery(hql.toString(), OrderDTO.class);
+				list = query1.getResultList();
+
+				if (list.size() == 0) {
+					hql.append("as u where u.PRODUCTS = " + dto.getOrderid());
+					Query<OrderDTO> query2 = session.createQuery(hql.toString(), OrderDTO.class);
+					list = query2.getResultList();
+				}
+			}
+		}
 		log.info("OrderDAOImpl Search method End");
 		return list;
 	}
