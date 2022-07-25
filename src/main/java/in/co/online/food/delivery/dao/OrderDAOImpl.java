@@ -96,49 +96,28 @@ public class OrderDAOImpl implements OrderDAOInt {
 	public List<OrderDTO> search(OrderDTO dto, int pageNo, int pageSize) {
 		log.info("OrderDAOImpl Search method Start");
 		Session session = entityManager.unwrap(Session.class);
-		StringBuffer hql = new StringBuffer("from OrderDTO  ");
-		if (dto != null) {
+		StringBuffer hql = new StringBuffer("from OrderDTO as u where 1=1 ");
+		/*if (dto != null) {
 			if (dto.getId() > 0) {
-				hql.append("as u where u.id = " + dto.getId());
+				hql.append("and u.id = " + dto.getId());
 			}
 			if (dto.getOrderid() > 0) {
-				hql.append("as u where u.orderid = " + dto.getOrderid());
+				hql.append("and u.orderid = " + dto.getOrderid());
 			}
 			
 			if (dto.getUserId() > 0) {
-				hql.append("as u where u.userId = " + dto.getUserId());
+				hql.append("and u.userId = " + dto.getUserId());
 			}
 			
 
-		}
+		}*/
 		Query<OrderDTO> query = session.createQuery(hql.toString(), OrderDTO.class);
 		if (pageNo > 0) {
 			pageNo = (pageNo - 1) * pageSize;
 			query.setFirstResult(pageNo);
 			query.setMaxResults(pageSize);
 		}
-		List<OrderDTO> list = new ArrayList<>();
-		if(Objects.nonNull(dto.getOrderid()) ){
-			list	= query.getResultList();
-		}
-
-		if(list.size()==0)
-		{
-			if (dto.getOrderid() > 0) {
-				hql.append("as u where u.orderid = " + dto.getOrderid());
-			}else {
-
-				hql.append("as u where u.name = " + dto.getOrderid());
-				Query<OrderDTO> query1 = session.createQuery(hql.toString(), OrderDTO.class);
-				list = query1.getResultList();
-
-				if (list.size() == 0) {
-					hql.append("as u where u.PRODUCTS = " + dto.getOrderid());
-					Query<OrderDTO> query2 = session.createQuery(hql.toString(), OrderDTO.class);
-					list = query2.getResultList();
-				}
-			}
-		}
+		List<OrderDTO> list = query.getResultList();
 		log.info("OrderDAOImpl Search method End");
 		return list;
 	}

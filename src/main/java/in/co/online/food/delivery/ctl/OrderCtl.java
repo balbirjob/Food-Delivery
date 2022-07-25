@@ -2,13 +2,16 @@ package in.co.online.food.delivery.ctl;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.mail.Session;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -35,186 +38,216 @@ import in.co.online.food.delivery.util.DataUtility;
 @RequestMapping("/ctl/order")
 public class OrderCtl extends BaseCtl {
 
-	@Autowired
-	private OrderServiceInt service;
-	
-	@Autowired
-	private CartServiceInt cartService;
+    @Autowired
+    private OrderServiceInt service;
 
-	@ModelAttribute
-	public void preload(Model model) {
-	}
+    @Autowired
+    private CartServiceInt cartService;
 
-	@GetMapping
-	public String display(@RequestParam(required = false) Long id, Long pId, @ModelAttribute("form") OrderForm form,
-			HttpSession session, Model model) {
-		if (form.getId() > 0) {
-			OrderDTO bean = service.findBypk(id);
-			form.populate(bean);
-		}
-		UserDTO uDto=(UserDTO)session.getAttribute("user");
-		form.setName(uDto.getFirstName()+" "+uDto.getLastName());
-		form.setEmail(uDto.getEmailId());
-		form.setMobileNo(uDto.getContactNo());
-		CartDTO cDto=new CartDTO();
-		cDto.setUser(uDto);
-		model.addAttribute("cList", cartService.search(cDto));
-		return "order";
-	}
+    @ModelAttribute
+    public void preload(Model model) {
+    }
 
-	@PostMapping
-	public String submit(@ModelAttribute("form") OrderForm form, BindingResult bindingResult,
-			HttpSession session, Model model) {
+    @GetMapping
+    public String display(@RequestParam(required = false) Long id, Long pId, @ModelAttribute("form") OrderForm form,
+                          HttpSession session, Model model) {
+        if (form.getId() > 0) {
+            OrderDTO bean = service.findBypk(id);
+            form.populate(bean);
+        }
+        UserDTO uDto = (UserDTO) session.getAttribute("user");
+        form.setName(uDto.getFirstName() + " " + uDto.getLastName());
+        form.setEmail(uDto.getEmailId());
+        form.setMobileNo(uDto.getContactNo());
+        CartDTO cDto = new CartDTO();
+        cDto.setUser(uDto);
+        model.addAttribute("cList", cartService.search(cDto));
+        return "order";
+    }
 
-		if (OP_RESET.equalsIgnoreCase(form.getOperation())) {
-			return "redirect:/ctl/order";
-		}
-		
-		if (OP_PAYMENT.equalsIgnoreCase(form.getOperation())) {
-			OrderDTO bean = (OrderDTO) form.getDTO();
-			session.setAttribute("orders", bean);
-			return "payment";
-		}
-		
-		try {
-			if (OP_PLACE_ORDER.equalsIgnoreCase(form.getOperation())) {
-				OrderDTO bean = (OrderDTO) session.getAttribute("orders");
-				UserDTO uDto=(UserDTO)session.getAttribute("user");
-				CartDTO cDto=new CartDTO();
-				cDto.setUser(uDto);
-				List<CartDTO> cList= cartService.search(cDto);
-				System.out.println("Cart List Size==="+cList.size());
-				bean.setOrderid(DataUtility.getRandom());
-				Iterator<CartDTO> it=cList.iterator();
-				model.addAttribute("cartList",cList);
-				model.addAttribute("orderDetail",bean);
-				while (it.hasNext()) {
-					System.out.println("In loop");
-					CartDTO cartDTO = (CartDTO) it.next();
-					bean.setProduct(cartDTO.getProduct());
-					bean.setUserId(uDto.getId());
-					bean.setQuantity(cartDTO.getQuantity());
-					bean.setTotal(String.valueOf(DataUtility.getLong(cartDTO.getQuantity())*DataUtility.getLong(cartDTO.getPrice())));
-					service.add(bean);
-					cartService.delete(cartDTO);
-				}
-				return "success";
-			}
-		} catch (DuplicateRecordException e) {
-			model.addAttribute("error", e.getMessage());
-			return "order";
-		}
-		return "";
-	}
+    @PostMapping
+    public String submit(@ModelAttribute("form") OrderForm form, BindingResult bindingResult,
+                         HttpSession session, Model model) {
 
-	@PostMapping("/saveOrder")
-	public String submitOrder(@ModelAttribute("form") OrderDTO orderDTO, BindingResult bindingResult,
-						 HttpSession session, Model model) {
-		try {
+        if (OP_RESET.equalsIgnoreCase(form.getOperation())) {
+            return "redirect:/ctl/order";
+        }
 
-				UserDTO uDto=(UserDTO)session.getAttribute("user");
-				CartDTO cDto=new CartDTO();
-				cDto.setUser(uDto);
-				List<CartDTO> cList= cartService.search(cDto);
-				System.out.println("Cart List Size==="+ cList.size());
+        if (OP_PAYMENT.equalsIgnoreCase(form.getOperation())) {
+            OrderDTO bean = (OrderDTO) form.getDTO();
+            session.setAttribute("orders", bean);
+            return "payment";
+        }
 
-			    OrderDTO bean = new OrderDTO();
-						bean.setOrderid(DataUtility.getRandom());
-						bean.setName(uDto.getFirstName());
-						bean.setAddress1(uDto.getLastName());
+        try {
+            if (OP_PLACE_ORDER.equalsIgnoreCase(form.getOperation())) {
+                OrderDTO bean = (OrderDTO) session.getAttribute("orders");
+                UserDTO uDto = (UserDTO) session.getAttribute("user");
+                CartDTO cDto = new CartDTO();
+                cDto.setUser(uDto);
+                List<CartDTO> cList = cartService.search(cDto);
+                System.out.println("Cart List Size===" + cList.size());
+                bean.setOrderid(DataUtility.getRandom());
+                Iterator<CartDTO> it = cList.iterator();
+                model.addAttribute("cartList", cList);
+                model.addAttribute("orderDetail", bean);
+                while (it.hasNext()) {
+                    System.out.println("In loop");
+                    CartDTO cartDTO = (CartDTO) it.next();
+                    bean.setProduct(cartDTO.getProduct());
+                    bean.setUserId(uDto.getId());
+                    bean.setQuantity(cartDTO.getQuantity());
+                    bean.setTotal(String.valueOf(DataUtility.getLong(cartDTO.getQuantity()) * DataUtility.getLong(cartDTO.getPrice())));
+                    service.add(bean);
+                    cartService.delete(cartDTO);
+                }
+                return "success";
+            }
+        } catch (DuplicateRecordException e) {
+            model.addAttribute("error", e.getMessage());
+            return "order";
+        }
+        return "";
+    }
 
-				Iterator<CartDTO> it=cList.iterator();
-				model.addAttribute("cartList",cList);
-				model.addAttribute("orderDetail",bean);
-				while (it.hasNext()) {
-					System.out.println("In loop");
-					CartDTO cartDTO = (CartDTO) it.next();
-					bean.setProduct(cartDTO.getProduct());
-					bean.setUserId(uDto.getId());
-					bean.setMobileNo(uDto.getContactNo());
-					bean.setQuantity(cartDTO.getQuantity());
-					bean.setModifiedDatetime(Timestamp.valueOf(LocalDateTime.now()));
-					bean.setTotal(String.valueOf(DataUtility.getLong(cartDTO.getQuantity())*DataUtility.getLong(cartDTO.getPrice())));
-					service.add(bean);
-					cartService.delete(cartDTO);
-				}
-				Thread.sleep(30000);
-				return "success";
+    @PostMapping("/saveOrder")
+    public String submitOrder(@ModelAttribute("form") OrderDTO orderDTO, BindingResult bindingResult,
+                              HttpSession session, Model model) {
+        try {
 
-		} catch (DuplicateRecordException e) {
-			model.addAttribute("error", e.getMessage());
-			return "order";
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	@RequestMapping(value = "/search", method = { RequestMethod.GET, RequestMethod.POST })
-	public String searchList(@ModelAttribute("form") OrderForm form,
-			@RequestParam(required = false) String operation, Long vid, HttpSession session, Model model) {
+            UserDTO uDto = (UserDTO) session.getAttribute("user");
+            CartDTO cDto = new CartDTO();
+            cDto.setUser(uDto);
+            List<CartDTO> cList = cartService.search(cDto);
+            System.out.println("Cart List Size===" + cList.size());
 
-		if (OP_RESET.equalsIgnoreCase(operation)) {
-			return "redirect:/ctl/order/search";
-		}
+            OrderDTO bean = new OrderDTO();
+            bean.setOrderid(DataUtility.getRandom());
+            bean.setName(uDto.getFirstName());
+            bean.setAddress1(uDto.getLastName());
 
-		int pageNo = form.getPageNo();
-		int pageSize = form.getPageSize();
+            Iterator<CartDTO> it = cList.iterator();
+            model.addAttribute("cartList", cList);
+            model.addAttribute("orderDetail", bean);
+            while (it.hasNext()) {
+                System.out.println("In loop");
+                CartDTO cartDTO = (CartDTO) it.next();
+                bean.setProduct(cartDTO.getProduct());
+                bean.setUserId(uDto.getId());
+                bean.setMobileNo(uDto.getContactNo());
+                bean.setQuantity(cartDTO.getQuantity());
+                bean.setModifiedDatetime(Timestamp.valueOf(LocalDateTime.now()));
+                bean.setTotal(String.valueOf(DataUtility.getLong(cartDTO.getQuantity()) * DataUtility.getLong(cartDTO.getPrice())));
+                service.add(bean);
+                cartService.delete(cartDTO);
+            }
+            Thread.sleep(30000);
+            return "success";
 
-		if (OP_NEXT.equals(operation)) {
-			pageNo++;
-		} else if (OP_PREVIOUS.equals(operation)) {
-			pageNo--;
-		} else if (OP_NEW.equals(operation)) {
-			return "redirect:/ctl/order";
-		}
+        } catch (DuplicateRecordException e) {
+            model.addAttribute("error", e.getMessage());
+            return "order";
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-		pageNo = (pageNo < 1) ? 1 : pageNo;
-		pageSize = (pageSize < 1) ? 10 : pageSize;
+    @RequestMapping(value = "/search", method = {RequestMethod.GET, RequestMethod.POST})
+    public String searchList(@ModelAttribute("form") OrderForm form,
+                             @RequestParam(required = false) String operation, Long vid, HttpSession session, Model model) {
 
-		if (OP_DELETE.equals(operation)) {
-			pageNo = 1;
-			if (form.getIds() != null) {
-				for (long id : form.getIds()) {
-					OrderDTO dto = new OrderDTO();
-					dto.setId(id);
-					service.delete(dto);
-				}
-				model.addAttribute("success", "Deleted Successfully!!!");
-			} else {
-				model.addAttribute("error", "Select at least one record");
-			}
-		}
-		OrderDTO dto = (OrderDTO) form.getDTO();
+        if (OP_RESET.equalsIgnoreCase(operation)) {
+            return "redirect:/ctl/order/search";
+        }
 
-		UserDTO uDto = (UserDTO) session.getAttribute("user");
-		if(uDto.getRoleId()==2) {
-			dto.setUserId(uDto.getId());
-		}
-		
+        int pageNo = form.getPageNo();
+        int pageSize = form.getPageSize();
 
-		List<OrderDTO> list = service.search(dto, pageNo, pageSize);
-		List<OrderDTO> totallist = service.search(dto);
-		model.addAttribute("list", list);
+        if (OP_NEXT.equals(operation)) {
+            pageNo++;
+        } else if (OP_PREVIOUS.equals(operation)) {
+            pageNo--;
+        } else if (OP_NEW.equals(operation)) {
+            return "redirect:/ctl/order";
+        }
 
-		if (list.size() == 0 && !OP_DELETE.equalsIgnoreCase(operation)) {
-			model.addAttribute("error", "Record not found");
-		}
+        pageNo = (pageNo < 1) ? 1 : pageNo;
+        pageSize = (pageSize < 1) ? 10 : pageSize;
 
-		int listsize = list.size();
-		int total = totallist.size();
-		int pageNoPageSize = pageNo * pageSize;
+        if (OP_DELETE.equals(operation)) {
+            pageNo = 1;
+            if (form.getIds() != null) {
+                for (long id : form.getIds()) {
+                    OrderDTO dto = new OrderDTO();
+                    dto.setId(id);
+                    service.delete(dto);
+                }
+                model.addAttribute("success", "Deleted Successfully!!!");
+            } else {
+                model.addAttribute("error", "Select at least one record");
+            }
+        }
+        OrderDTO dto = (OrderDTO) form.getDTO();
 
-		form.setPageNo(pageNo);
-		form.setPageSize(pageSize);
-		model.addAttribute("pageNo", pageNo);
-		model.addAttribute("pageSize", pageSize);
-		model.addAttribute("listsize", listsize);
-		model.addAttribute("total", total);
-		model.addAttribute("pagenosize", pageNoPageSize);
-		model.addAttribute("form", form);
-		return "orderList";
-	}
-	
+        UserDTO uDto = (UserDTO) session.getAttribute("user");
+        if (uDto.getRoleId() == 2) {
+            dto.setUserId(uDto.getId());
+        }
+
+
+        List<OrderDTO> list = service.search(dto, pageNo, pageSize);
+        Long ordrId = null;
+        List<OrderDTO> totallist= new ArrayList<>();
+        try {
+            ordrId = Long.parseLong(form.getOrderId());
+            Long finalOrdrId = ordrId;
+            Long finalOrdrId1 = ordrId;
+            totallist = list.stream().filter(i -> i.getOrderid()== finalOrdrId1).collect(Collectors.toList());
+
+
+        } catch (Exception e) {
+            e.getMessage();
+        }
+        if(totallist.size()==0)
+        {
+            String name = form.getOrderId();
+            totallist = list.stream().filter(i -> StringUtils.equalsIgnoreCase(i.getName(),name)).collect(Collectors.toList());
+
+        }
+        if(totallist.size()==0)
+        {
+            String name = form.getOrderId();
+            totallist = list.stream().filter(i -> StringUtils.equalsIgnoreCase(i.getProduct().getName(),name)).collect(Collectors.toList());
+        }
+
+
+        //service.search(dto);
+        if (StringUtils.isNoneBlank(form.getOrderId())) {
+            model.addAttribute("list", totallist);
+
+        } else {
+            model.addAttribute("list", list);
+        }
+
+
+        if (list.size() == 0 && !OP_DELETE.equalsIgnoreCase(operation)) {
+            model.addAttribute("error", "Record not found");
+        }
+
+        int listsize = list.size();
+        int total = totallist.size();
+        int pageNoPageSize = pageNo * pageSize;
+
+        form.setPageNo(pageNo);
+        form.setPageSize(pageSize);
+        model.addAttribute("pageNo", pageNo);
+        model.addAttribute("pageSize", pageSize);
+        model.addAttribute("listsize", listsize);
+        model.addAttribute("total", total);
+        model.addAttribute("pagenosize", pageNoPageSize);
+        model.addAttribute("form", form);
+        return "orderList";
+    }
 
 
 }
